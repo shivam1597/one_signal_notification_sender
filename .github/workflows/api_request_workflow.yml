@@ -1,0 +1,16 @@
+name: API Request Every Minute
+
+on:
+  schedule:
+    - cron: "*/1 * * * *"
+
+jobs:
+  run_script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run Python script
+        run: python fetch_api.py
