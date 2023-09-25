@@ -26,8 +26,8 @@ while boolean_value:
     timestamp_seconds = time.time()
 
     timestamp_milliseconds = int(timestamp_seconds * 1000)
-
-    print(timestamp_milliseconds)
+    ref.child('timeStamp').set(timestamp_milliseconds)
+    # print(timestamp_milliseconds)
     # current_date = datetime.now()
 
     # one_day_before = current_date + timedelta(days=-1)
@@ -104,7 +104,7 @@ while boolean_value:
 
     # boolean_value = False
     
-    time.sleep(5)
+    time.sleep(17)
 
 
 # check if match is live, if it is live, save the matchID and match status in firebase
