@@ -126,7 +126,7 @@ while boolean_value:
 
     else:
         print(f"Failed to fetch data. Status code: {response.status_code}")
-    ref.child('timestamp').set(current_date.time()*1000)
+    ref.child('timestamp').set(time.time()*1000)
     time.sleep(30)
 
 # check if match is live, if it is live, save the matchID and match status in firebase
