@@ -1,8 +1,6 @@
-name: API Request Every Minute
+name: API Request On Push
 
 on:
-  schedule:
-    - cron: "*/1 * * * *"
   push:
     branches:
       - main  # Change to your main branch name if needed
@@ -18,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.11.5  # Specify the Python version you're using
+          python-version: 3.x  # Specify a supported Python version (e.g., 3.7, 3.8, 3.9, etc.)
 
       - name: Install dependencies
         run: |
