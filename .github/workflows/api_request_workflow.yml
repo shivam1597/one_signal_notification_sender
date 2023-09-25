@@ -3,14 +3,26 @@ name: API Request Every Minute
 on:
   schedule:
     - cron: "*/1 * * * *"
+  push:
+    branches:
+      - main  # Change to your main branch name if needed
 
 jobs:
-  run_script:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest  # You can change the runner OS if needed
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Run Python script
-        run: python fetch_api.py
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11.5  # Specify the Python version you're using
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt  
+      
+      - name: Run your Python script
+        run: python fetch_api.py  # Replace with the actual script name
