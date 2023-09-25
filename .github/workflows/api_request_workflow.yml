@@ -1,11 +1,9 @@
-name: API Request Every Minute
+name: API Request On Push
 
 on:
-  schedule:
-    - cron: "* * * * *"
   push:
     branches:
-      - main  # Change to your main branch name if needed
+      - master  # Change to your main branch name if needed
 
 jobs:
   build:
