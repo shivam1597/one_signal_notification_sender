@@ -1,13 +1,12 @@
 name: API Request On Push
 
 on:
-  push:
-    branches:
-      - master  # Change to your main branch name if needed
+  schedule:
+    - cron: '0 */6 * * *'  # Run every 6 hours (0 minutes past every 6th hour)
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # You can change the runner OS if needed
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -16,11 +15,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.x  # Specify a supported Python version (e.g., 3.7, 3.8, 3.9, etc.)
+          python-version: 3.x
 
       - name: Install dependencies
         run: |
           pip install -r requirements.txt  
       
       - name: Run your Python script
-        run: python fetch_api.py  # Replace with the actual script name
+        run: python fetch_api.py
