@@ -126,7 +126,7 @@ while boolean_value:
                                     notification_sent = True
                             else:
                                 notification_sent = False
-                            if innings_ball==innings_max_balls:
+                            if innings_ball==innings_max_balls and not notification_sent:
                                 indian_match_notification_data = {
                                         'app_id': onesignal_app_id,
                                         'included_segments': ['All'],  # Send to all users
@@ -135,6 +135,9 @@ while boolean_value:
                                     }
                                 indian_match_json_data = json.dumps(indian_match_notification_data)
                                 response_notification = requests.post('https://onesignal.com/api/v1/notifications', headers=headers, data=indian_match_json_data)
+                                notification_sent = True
+                            else:
+                                notification_sent = False
                             # construct notification here
                     time.sleep(5)
 
