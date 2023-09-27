@@ -21,7 +21,7 @@ except auth.AuthError as e:
     print(f"Error: {e}")
 
 ref = db.reference()
-
+start_time = time.time()
 boolean_value = True
 notification_sent = False
 while boolean_value:
@@ -29,7 +29,7 @@ while boolean_value:
     current_date = datetime.now()
 
     current_time = time.time()
-    elapsed_time = current_time - current_date
+    elapsed_time = current_time - start_time
 
     one_day_before = current_date + timedelta(days=-1)
     formatted_before_date = one_day_before.strftime('%Y-%m-%d')
