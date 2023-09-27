@@ -28,6 +28,9 @@ while boolean_value:
     
     current_date = datetime.now()
 
+    current_time = time.time()
+    elapsed_time = current_time - current_date
+
     one_day_before = current_date + timedelta(days=-1)
     formatted_before_date = one_day_before.strftime('%Y-%m-%d')
 
@@ -135,11 +138,11 @@ while boolean_value:
                             # construct notification here
                     time.sleep(5)
 
-        
-
     else:
         print(f"Failed to fetch data. Status code: {response.status_code}")
-    ref.child('timestamp').set(time.time()*1000)
+    if elapsed_time >= 6*60*60:
+        break
+    time.sleep(1)
 
 # check if match is live, if it is live, save the matchID and match status in firebase
 # and whenever the match will complete, send the notification of the completion of match and delete that id from firebase
