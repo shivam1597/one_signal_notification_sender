@@ -23,6 +23,7 @@ except auth.AuthError as e:
 ref = db.reference()
 
 boolean_value = True
+notification_sent = False
 while boolean_value:
     
     current_date = datetime.now()
@@ -37,7 +38,7 @@ while boolean_value:
 
     match_id = ''
     # Make an API request
-    response = requests.get(url)
+    response = requests.get(url, headers={'Account':'ICC'})
 
     if response.status_code == 200:
         onesignal_app_id = 'a6803967-4276-4785-bdda-d48455ed72dc'
@@ -68,66 +69,77 @@ while boolean_value:
                     response_notification = requests.post('https://onesignal.com/api/v1/notifications', headers=headers, data=json_data)
                     # add sending notification logic (for match completion along with winner)
                     ref.child('live_match_status').child(str(match_id)).delete()
-            if content.get('scheduleEntry').get('matchState') == 'L':
-
+            if scheduled_entry_object.get('matchState') == 'L':
                 ref.child('live_match_status').update({str(match_id):'L'})
 
                 while True:
                     commentary_url = 'https://api.icc.cdp.pulselive.com/commentary/ICC/{}/EN/?direction=descending&maxResults=30'.format(match_id)
                     commentary_response = requests.get(commentary_url)
                     commentary_json = commentary_response.json()
-                    first_commentary_ball_details = commentary_json['content'][0]['ballDetails']
-
-                    if first_commentary_ball_details is not None:
-                        ball_activity = first_commentary_ball_details['activity']
-                        if ball_activity == 'W':
-                            activity_message = first_commentary_ball_details['message'] # this will be sent in the notification
-                            wicket_match_notification_data = {
-                                'app_id': onesignal_app_id,
-                                'included_segments': ['All'],  # Send to all users
-                                'headings': {'en': '{} vs {}'.format(team1_name, team2_name)},
-                                'contents': {'en': activity_message}
-                            }
-                            indian_match_json_data = json.dumps(wicket_match_notification_data)
-                            response_notification = requests.post('https://onesignal.com/api/v1/notifications', headers=headers, data=indian_match_json_data)
-                    elif first_commentary_ball_details is None:
-                        first_commentary_ball_details = commentary_json['content'][0]['details']
-                        inning_over = first_commentary_ball_details.get('over')
-                        innings_ball = first_commentary_ball_details.get('inningsBalls')
-                        innings_max_balls = first_commentary_ball_details.get('inningsMaxBalls')
-                        remaining_balls = innings_max_balls-innings_ball
-                        required_runs = first_commentary_ball_details.get('requiredRuns')
-                        batting_team = first_commentary_ball_details.get('team').get('fullName')
-                        innings_runs = first_commentary_ball_details.get('inningsRuns')
-                        innings_wickets = first_commentary_ball_details.get('inningsWickets')
-                        if inning_over%5==0:
-                            if team1_name=='India' or team2_name=='India':
+                    if commentary_json is not None:
+                        commentary_json_first_item = commentary_json['commentaries']['content'][0]
+                        if 'ballDetails' in commentary_json_first_item:
+                            first_commentary_ball_details = commentary_json_first_item['ballDetails']
+                            if first_commentary_ball_details is not None:
+                                ball_activity = first_commentary_ball_details['activity']
+                                if ball_activity == 'W':
+                                    if not notification_sent:
+                                        activity_message = first_commentary_ball_details['message'] # this will be sent in the notification
+                                        wicket_match_notification_data = {
+                                            'app_id': onesignal_app_id,
+                                            'included_segments': ['All'],  # Send to all users
+                                            'headings': {'en': '{} vs {}'.format(team1_name, team2_name)},
+                                            'contents': {'en': activity_message}
+                                        }
+                                        indian_match_json_data = json.dumps(wicket_match_notification_data)
+                                        response_notification = requests.post('https://onesignal.com/api/v1/notifications', headers=headers, data=indian_match_json_data)
+                                        notification_sent = True
+                                else:
+                                    notification_sent = False
+                        else:
+                            first_commentary_ball_details = commentary_json_first_item['details']
+                            inning_over = first_commentary_ball_details.get('over')
+                            innings_ball = first_commentary_ball_details.get('inningsBalls')
+                            innings_max_balls = first_commentary_ball_details.get('inningsMaxBalls')
+                            remaining_balls = innings_max_balls-innings_ball
+                            required_runs = first_commentary_ball_details.get('requiredRuns')
+                            batting_team = first_commentary_ball_details.get('team').get('fullName')
+                            innings_runs = first_commentary_ball_details.get('inningsRuns')
+                            innings_wickets = first_commentary_ball_details.get('inningsWickets')
+                            # required_runs
+                            if inning_over%5==0 and not notification_sent:
+                                if team1_name=='India' or team2_name=='India':
+                                    message_to_send = '{}: {}/{} after {} over.\n Tap to view full scorecard.'.format(batting_team, innings_runs, innings_wickets, inning_over)
+                                    if required_runs is not None:
+                                        message_to_send = message_to_send + ' {} requires {} in {}.'.format(batting_team, required_runs, remaining_balls)
+                                    indian_match_notification_data = {
+                                        'app_id': onesignal_app_id,
+                                        'included_segments': ['All'],  # Send to all users
+                                        'headings': {'en': '{} vs {}'.format(team1_name, team2_name)},
+                                        'contents': {'en': message_to_send}
+                                    }
+                                    indian_match_json_data = json.dumps(indian_match_notification_data)
+                                    response_notification = requests.post('https://onesignal.com/api/v1/notifications', headers=headers, data=indian_match_json_data)
+                                    notification_sent = True
+                            else:
+                                notification_sent = False
+                            if innings_ball==innings_max_balls:
                                 indian_match_notification_data = {
-                                    'app_id': onesignal_app_id,
-                                    'included_segments': ['All'],  # Send to all users
-                                    'headings': {'en': '{} vs {}'.format(team1_name, team2_name)},
-                                    'contents': {'en': '{}: {} after {} over. {} requires {} in {}. {}'.format(batting_team, innings_runs, inning_over, batting_team, required_runs, remaining_balls, first_commentary_ball_details)}
-                                }
+                                        'app_id': onesignal_app_id,
+                                        'included_segments': ['All'],  # Send to all users
+                                        'headings': {'en': '{} vs {}'.format(team1_name, team2_name)},
+                                        'contents': {'en': '{}: {} after {} over. {} requires {} in {}. {}'.format(batting_team, innings_runs, inning_over, batting_team, required_runs, remaining_balls, first_commentary_ball_details)}
+                                    }
                                 indian_match_json_data = json.dumps(indian_match_notification_data)
                                 response_notification = requests.post('https://onesignal.com/api/v1/notifications', headers=headers, data=indian_match_json_data)
-                        if innings_ball==innings_max_balls:
-                            indian_match_notification_data = {
-                                    'app_id': onesignal_app_id,
-                                    'included_segments': ['All'],  # Send to all users
-                                    'headings': {'en': '{} vs {}'.format(team1_name, team2_name)},
-                                    'contents': {'en': '{}: {} after {} over. {} requires {} in {}. {}'.format(batting_team, innings_runs, inning_over, batting_team, required_runs, remaining_balls, first_commentary_ball_details)}
-                                }
-                            indian_match_json_data = json.dumps(indian_match_notification_data)
-                            response_notification = requests.post('https://onesignal.com/api/v1/notifications', headers=headers, data=indian_match_json_data)
                             # construct notification here
-                    time.sleep(10)
+                    time.sleep(5)
 
         
 
     else:
         print(f"Failed to fetch data. Status code: {response.status_code}")
     ref.child('timestamp').set(time.time()*1000)
-    time.sleep(30)
 
 # check if match is live, if it is live, save the matchID and match status in firebase
 # and whenever the match will complete, send the notification of the completion of match and delete that id from firebase
